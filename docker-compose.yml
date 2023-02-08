@@ -1,0 +1,28 @@
+version: '3.8'
+services:
+  dev-database:  
+    container_name: dev-database
+    image: postgres:13
+    ports: 
+      - 5432:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: dev-db
+    networks:
+      - system-network
+
+  test-database:  
+    container_name: test-database
+    image: postgres:13
+    ports: 
+      - 5435:5432
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 123
+      POSTGRES_DB: test-db
+    networks:
+      - system-network
+    
+networks:
+  system-network:
