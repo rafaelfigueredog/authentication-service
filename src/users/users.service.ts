@@ -1,14 +1,15 @@
 import { AuthProvider } from '@prisma/client';
 import { UserEntity } from './entities/user.entity';
-import {
-  ForbiddenException,
-  Injectable,
-  ServiceUnavailableException,
-} from '@nestjs/common';
 import { CreateUser, UpdateUser } from './interfaces';
 import { PrismaService } from '../prisma';
 import { ApiTags } from '@nestjs/swagger';
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
+
+import {
+  ForbiddenException,
+  Injectable,
+  BadRequestException,
+} from '@nestjs/common';
 
 @Injectable()
 @ApiTags('Users')
@@ -26,7 +27,7 @@ export class UsersService {
         }
       }
 
-      throw new ServiceUnavailableException();
+      throw new BadRequestException();
     }
   }
 
@@ -35,7 +36,7 @@ export class UsersService {
       const users = await this.prisma.user.findMany();
       return users.map((user) => new UserEntity(user));
     } catch (err) {
-      throw new ServiceUnavailableException();
+      throw new BadRequestException();
     }
   }
 
@@ -47,7 +48,7 @@ export class UsersService {
 
       return user ? new UserEntity(user) : null;
     } catch (err) {
-      throw new ServiceUnavailableException();
+      throw new BadRequestException();
     }
   }
 
@@ -59,7 +60,7 @@ export class UsersService {
       });
       return new UserEntity(user);
     } catch (err) {
-      throw new ServiceUnavailableException();
+      throw new BadRequestException();
     }
   }
 
@@ -68,7 +69,7 @@ export class UsersService {
       const user = await this.prisma.user.delete({ where: { uuid } });
       return new UserEntity(user);
     } catch (err) {
-      throw new ServiceUnavailableException();
+      throw new BadRequestException();
     }
   }
 
@@ -80,7 +81,7 @@ export class UsersService {
 
       return user;
     } catch (err) {
-      throw new ServiceUnavailableException();
+      throw new BadRequestException();
     }
   }
 
@@ -94,7 +95,7 @@ export class UsersService {
 
       return new UserEntity(user);
     } catch (error) {
-      throw new ServiceUnavailableException();
+      throw new BadRequestException();
     }
   }
 }

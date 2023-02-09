@@ -71,7 +71,7 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      throw new BadRequestException(error, { cause: error });
+      throw new BadRequestException(error);
     }
   }
 
