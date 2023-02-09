@@ -39,3 +39,6 @@ prisma/migrations
 
 # Env Files
 .env
+.env.dev
+.env.test
+.env.example
