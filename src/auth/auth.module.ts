@@ -6,9 +6,14 @@ import { AuthController } from './auth.controller';
 import { GoogleAuthStrategy, JwtAuthStrategy } from './strategies';
 import { SessionSerializer } from './serializers';
 import { UsersService } from '../users/users.service';
+import { HashModule } from './hash/hash.module';
 
 @Module({
-  imports: [JwtModule.register({}), PassportModule.register({ session: true })],
+  imports: [
+    JwtModule.register({}),
+    PassportModule.register({ session: true }),
+    HashModule,
+  ],
   controllers: [AuthController],
   providers: [
     UsersService,

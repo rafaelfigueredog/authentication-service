@@ -5,6 +5,7 @@ import { AuthProvider } from '@prisma/client';
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { SignupAuthDto, SigninAuthDto, GoogleUserProfile } from './dto';
+import { HashService } from './hash/hash.service';
 import { EnvProps } from '../env';
 
 import {
@@ -13,14 +14,13 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 
-import * as argon from 'argon2';
-
 @Injectable()
 export class AuthService {
   constructor(
     private readonly config: ConfigService,
     private readonly usersService: UsersService,
     private readonly jwt: JwtService,
+    private readonly hashService: HashService,
   ) {}
 
   async generateAccessToken(user: UserEntity) {
@@ -31,14 +31,6 @@ export class AuthService {
     return this.jwt.signAsync(payload, { secret, expiresIn });
   }
 
-  async generatePasswordHash(password: string): Promise<string> {
-    return argon.hash(password);
-  }
-
-  async verifyPassword(password: string, userHash: string) {
-    return argon.verify(userHash, password);
-  }
-
   async signinWithGoogle(user: UserEntity) {
     return this.generateAccessToken(user);
   }
@@ -47,7 +39,7 @@ export class AuthService {
     try {
       const user = await this.usersService.findBy(email, provider);
 
-      if (!user || !this.verifyPassword(password, user.hash)) {
+      if (!user || !this.hashService.verify(password, user.hash)) {
         throw new UnauthorizedException();
       }
 
@@ -68,7 +60,7 @@ export class AuthService {
 
   async signupWithEmail({ fullName, email, password }: SignupAuthDto) {
     try {
-      const hash = await this.generatePasswordHash(password);
+      const hash = await this.hashService.create(password);
 
       const user = await this.usersService.create({
         fullName,
