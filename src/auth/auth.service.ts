@@ -39,7 +39,7 @@ export class AuthService {
     try {
       const user = await this.usersService.findBy(email, provider);
 
-      if (!user || !this.hashService.verify(password, user.hash)) {
+      if (!user || !this.hashService.verify(user.hash, password)) {
         throw new UnauthorizedException();
       }
 
@@ -52,7 +52,8 @@ export class AuthService {
   async signinWithEmail({ email, password }: SigninAuthDto) {
     try {
       const user = await this.validateUser(email, password, AuthProvider.LOCAL);
-      return this.generateAccessToken(user);
+      const accessToken = await this.generateAccessToken(user);
+      return { accessToken };
     } catch (error) {
       throw new BadRequestException(error);
     }
@@ -70,7 +71,7 @@ export class AuthService {
 
       return user;
     } catch (error) {
-      throw new BadRequestException(error);
+      throw new BadRequestException(error, { cause: error });
     }
   }
 

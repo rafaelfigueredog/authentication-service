@@ -1,10 +1,17 @@
 import { AuthProvider } from '@prisma/client';
 import { UserEntity } from './entities/user.entity';
-import { Injectable, ServiceUnavailableException } from '@nestjs/common';
+import {
+  ForbiddenException,
+  Injectable,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { CreateUser, UpdateUser } from './interfaces';
 import { PrismaService } from '../prisma';
+import { ApiTags } from '@nestjs/swagger';
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime';
 
 @Injectable()
+@ApiTags('Users')
 export class UsersService {
   constructor(private readonly prisma: PrismaService) {}
 
@@ -12,7 +19,13 @@ export class UsersService {
     try {
       const user = await this.prisma.user.create({ data });
       return new UserEntity(user);
-    } catch (err) {
+    } catch (error) {
+      if (error instanceof PrismaClientKnownRequestError) {
+        if (error.code === 'P2002') {
+          throw new ForbiddenException('Credentials taken', { cause: error });
+        }
+      }
+
       throw new ServiceUnavailableException();
     }
   }
