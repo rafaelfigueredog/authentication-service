@@ -22,9 +22,19 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-## Description
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+
+
+## Authentication Service
+
+This is an authentication service built with NestJS, TypeScript, and Node.js. The service allows users to sign in with their Google accounts or with their email addresses and passwords, and uses JSON Web Token (JWT) authorization to ensure that only authenticated users can access protected routes in the API.
+
+## Features
+- Sign-in with Google
+- Sign-in with email
+- JWT authorization for protected routes
+- User registration and login
+- User profile management
 
 ## Installation
 
