@@ -1,8 +1,11 @@
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { ValidationPipe } from '@nestjs/common';
-import { NestFactory } from '@nestjs/core';
+import { HttpAdapterHost, NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import { PrismaService } from './prisma/prisma.service';
+import { AllExceptionsFilter } from './exceptions/all-exceptions.filter';
+import { PrismaClientExceptionFilter } from './exceptions/prisma-exception.filter';
+import { HttpExceptionFilter } from './exceptions/http-exception.filter';
 
 import * as session from 'express-session';
 import * as passport from 'passport';
@@ -22,6 +25,11 @@ async function bootstrap() {
 
   // set api as a global prefix
   app.setGlobalPrefix('api');
+
+  const { httpAdapter } = app.get(HttpAdapterHost);
+  app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
+  app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
+  app.useGlobalFilters(new HttpExceptionFilter());
 
   app.use(session(sessionOptions));
   app.use(passport.initialize());

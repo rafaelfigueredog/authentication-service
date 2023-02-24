@@ -1,18 +1,12 @@
 import { ConfigService } from '@nestjs/config';
+import { Injectable, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
-
 import { AuthProvider } from '@prisma/client';
 import { UserEntity } from '../users/entities/user.entity';
 import { UsersService } from '../users/users.service';
 import { SignupAuthDto, SigninAuthDto, GoogleUserProfile } from './dto';
 import { HashService } from './hash/hash.service';
 import { EnvProps } from '../env';
-
-import {
-  Injectable,
-  UnauthorizedException,
-  BadRequestException,
-} from '@nestjs/common';
 
 @Injectable()
 export class AuthService {
@@ -36,57 +30,41 @@ export class AuthService {
   }
 
   async validateUser(email: string, password: string, provider: AuthProvider) {
-    try {
-      const user = await this.usersService.findBy(email, provider);
+    const user = await this.usersService.findBy(email, provider);
 
-      if (!user || !this.hashService.verify(user.hash, password)) {
-        throw new UnauthorizedException();
-      }
-
-      return new UserEntity(user);
-    } catch (error) {
-      throw new BadRequestException(error);
+    if (!user || !this.hashService.verify(user.hash, password)) {
+      throw new UnauthorizedException();
     }
+
+    return new UserEntity(user);
   }
 
   async signinWithEmail({ email, password }: SigninAuthDto) {
-    try {
-      const user = await this.validateUser(email, password, AuthProvider.LOCAL);
-      const accessToken = await this.generateAccessToken(user);
-      return { accessToken };
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    const user = await this.validateUser(email, password, AuthProvider.LOCAL);
+    const accessToken = await this.generateAccessToken(user);
+    return { accessToken };
   }
 
   async signupWithEmail({ fullName, email, password }: SignupAuthDto) {
-    try {
-      const hash = await this.hashService.create(password);
+    const hash = await this.hashService.create(password);
 
-      const user = await this.usersService.create({
-        fullName,
-        email,
-        hash,
-      });
+    const user = await this.usersService.create({
+      fullName,
+      email,
+      hash,
+    });
 
-      return user;
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    return user;
   }
 
   async validateGoogleUser({ fullName, email, picture }: GoogleUserProfile) {
-    try {
-      const user = await this.usersService.findOrCreate({
-        provider: AuthProvider.GOOGLE,
-        fullName,
-        picture,
-        email,
-      });
+    const user = await this.usersService.findOrCreate({
+      provider: AuthProvider.GOOGLE,
+      fullName,
+      picture,
+      email,
+    });
 
-      return user;
-    } catch (error) {
-      throw new BadRequestException(error);
-    }
+    return user;
   }
 }

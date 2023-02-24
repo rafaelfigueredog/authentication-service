@@ -1,3 +1,7 @@
+import { ValidationException } from '../src/exceptions/validation.exception';
+import { AllExceptionsFilter } from '../src/exceptions/all-exceptions.filter';
+import { PrismaClientExceptionFilter } from '../src/exceptions/prisma-exception.filter';
+import { HttpExceptionFilter } from '../src/exceptions/http-exception.filter';
 import { CreateUser } from './../src/users/interfaces/create-user';
 import { SigninAuthDto } from './../src/auth/dto/signin-auth.dto';
 import { SignupAuthDto } from './../src/auth/dto/signup-auth.dto';
@@ -5,9 +9,9 @@ import { PrismaService } from './../src/prisma/prisma.service';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { AppModule } from '../src/app.module';
-
-import * as api from 'pactum';
 import { UpdateUser } from 'src/users/interfaces';
+import { HttpAdapterHost } from '@nestjs/core';
+import * as api from 'pactum';
 
 describe('App e2e', () => {
   let app: INestApplication;
@@ -19,7 +23,18 @@ describe('App e2e', () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
-    app.useGlobalPipes(new ValidationPipe());
+    app.useGlobalPipes(
+      new ValidationPipe({
+        exceptionFactory: (errors) => {
+          throw new ValidationException(errors);
+        },
+      }),
+    );
+
+    const { httpAdapter } = app.get(HttpAdapterHost);
+    app.useGlobalFilters(new AllExceptionsFilter(httpAdapter));
+    app.useGlobalFilters(new PrismaClientExceptionFilter(httpAdapter));
+    app.useGlobalFilters(new HttpExceptionFilter());
 
     await app.init();
     await app.listen(3333);
@@ -96,7 +111,7 @@ describe('App e2e', () => {
           password: '123456',
         };
 
-        return api.spec().post('/auth/signup').withBody(dto).expectStatus(400);
+        return api.spec().post('/auth/signup').withBody(dto).expectStatus(409);
       });
     });
 
@@ -184,7 +199,7 @@ describe('App e2e', () => {
           .post('/users')
           .withBody(dto)
           .withHeaders({ Authorization: 'Bearer $S{accessToken}' })
-          .expectStatus(403);
+          .expectStatus(409);
       });
 
       it('should create new user', () => {
@@ -205,7 +220,7 @@ describe('App e2e', () => {
 
     describe('Update User', () => {
       it('should throw error if update user without uuid', () => {
-        return api.spec().patch('/users').expectStatus(404);
+        return api.spec().put('/users').expectStatus(404);
       });
 
       it('should throw error if try update user with invalid email', () => {
